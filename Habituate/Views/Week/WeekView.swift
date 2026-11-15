@@ -6,12 +6,15 @@ struct WeekView: View {
     @Environment(HabitStore.self) private var store
     @Environment(\.today) private var today
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    @Query(sort: \Habit.sortOrder) private var habits: [Habit]
+    @Query(sort: \Habit.sortOrder) private var queriedHabits: [Habit]
     @State private var week = WeekViewModel()
     @State private var editorMode: HabitEditorMode?
     @State private var deletion: DeletionRequest?
     @State private var showingManage = false
     @State private var showingSettings = false
+
+    /// Leaves out habits deleted a moment ago that the query hasn't dropped yet; reading those would crash.
+    private var habits: [Habit] { queriedHabits.filter { !$0.isDeleted && $0.modelContext != nil } }
 
     var body: some View {
         Group {
@@ -35,15 +38,28 @@ struct WeekView: View {
         }
     }
 
+    // Built by hand rather than with ContentUnavailableView, which caps the text size.
     private var emptyState: some View {
-        ContentUnavailableView {
-            Label("No Habits Yet", systemImage: "checklist")
-        } description: {
-            Text("Add the habits you want to build, then tick them off each day.")
-        } actions: {
-            Button("Add Your First Habit") { editorMode = .new }
-                .buttonStyle(.borderedProminent)
-                .accessibilityIdentifier("addFirstHabit")
+        ScrollView {
+            VStack(spacing: 16) {
+                Image(systemName: "checklist")
+                    .font(.system(size: 56))
+                    .foregroundStyle(.secondary)
+                    .accessibilityHidden(true)
+                Text("No Habits Yet")
+                    .font(.title2.bold())
+                    .accessibilityAddTraits(.isHeader)
+                Text("Add the habits you want to build, then tick them off each day.")
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                Button("Add Your First Habit") { editorMode = .new }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                    .accessibilityIdentifier("addFirstHabit")
+            }
+            .padding(32)
+            .frame(maxWidth: .infinity)
+            .containerRelativeFrame(.vertical, alignment: .center)
         }
     }
 
@@ -102,8 +118,6 @@ struct WeekView: View {
                         .transition(.push(from: week.transitionEdge))
                     } header: {
                         DayHeaderRow(days: days, layout: layout)
-                            .id(weekStart)
-                            .transition(.push(from: week.transitionEdge))
                     }
                 }
                 .padding(.bottom, 16)

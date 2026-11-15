@@ -5,9 +5,12 @@ import SwiftUI
 struct ManageHabitsView: View {
     @Environment(HabitStore.self) private var store
     @Environment(\.dismiss) private var dismiss
-    @Query(sort: \Habit.sortOrder) private var habits: [Habit]
+    @Query(sort: \Habit.sortOrder) private var queriedHabits: [Habit]
     @State private var editorMode: HabitEditorMode?
     @State private var deletion: DeletionRequest?
+
+    /// Leaves out habits deleted a moment ago that the query hasn't dropped yet; reading those would crash.
+    private var habits: [Habit] { queriedHabits.filter { !$0.isDeleted && $0.modelContext != nil } }
 
     var body: some View {
         NavigationStack {

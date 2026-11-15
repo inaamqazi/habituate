@@ -62,6 +62,9 @@ jobs:
           xcrun xcresulttool export attachments --path TestResults.xcresult --output-path screenshots || true
           xcrun xcresulttool get test-results summary --path TestResults.xcresult > summary.json || true
           xcrun xcresulttool get test-results tests --path TestResults.xcresult > tests.json || true
+          mkdir -p crashes
+          find ~/Library/Logs/DiagnosticReports -name "Habituate*" -exec cp {} crashes/ \; 2>/dev/null || true
+          ls crashes
 
       - uses: actions/upload-artifact@v4
         if: always()
@@ -74,3 +77,4 @@ jobs:
             summary.json
             tests.json
             screenshots
+            crashes

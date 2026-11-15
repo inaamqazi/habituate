@@ -45,8 +45,9 @@ final class HabituateUITests: XCTestCase {
 
     private func scrollTo(_ element: XCUIElement, in app: XCUIApplication) {
         var attempts = 0
-        while !(element.exists && element.isHittable) && attempts < 6 {
-            app.swipeUp()
+        let list = app.collectionViews.firstMatch
+        while !(element.exists && element.isHittable) && attempts < 8 {
+            if list.exists { list.swipeUp() } else { app.swipeUp() }
             attempts += 1
         }
     }
@@ -125,12 +126,12 @@ final class HabituateUITests: XCTestCase {
         XCTAssertTrue(range.waitForExistence(timeout: 5))
         let thisWeek = range.label
         XCTAssertFalse(app.buttons["nextWeek"].isEnabled)
-        XCTAssertFalse(app.buttons["todayButton"].exists)
+        XCTAssertFalse(app.buttons["todayButton"].isEnabled)
 
         app.buttons["previousWeek"].tap()
         XCTAssertNotEqual(range.label, thisWeek)
         XCTAssertTrue(app.buttons["nextWeek"].isEnabled)
-        XCTAssertTrue(app.buttons["todayButton"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.buttons["todayButton"].isEnabled)
 
         app.buttons["previousWeek"].tap()
         app.buttons["todayButton"].tap()

@@ -11,7 +11,7 @@ struct HabitDetailView: View {
     }
 
     var body: some View {
-        if let habit = matches.first {
+        if let habit = matches.first(where: { !$0.isDeleted && $0.modelContext != nil }) {
             HabitDetailContent(habit: habit)
         } else {
             Color.clear.onAppear { dismiss() }
