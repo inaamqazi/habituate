@@ -43,11 +43,18 @@ final class HabituateUITests: XCTestCase {
         return XCTWaiter().wait(for: [expectation], timeout: timeout) == .completed
     }
 
+    /// Drags in the form's right-hand margin, where no button can swallow the gesture.
     private func scrollTo(_ element: XCUIElement, in app: XCUIApplication) {
-        var attempts = 0
+        if app.keyboards.count > 0 {
+            app.typeText("\n")
+        }
         let list = app.collectionViews.firstMatch
-        while !(element.exists && element.isHittable) && attempts < 8 {
-            if list.exists { list.swipeUp() } else { app.swipeUp() }
+        let surface = list.exists ? list : app
+        var attempts = 0
+        while !(element.exists && element.isHittable) && attempts < 10 {
+            let start = surface.coordinate(withNormalizedOffset: CGVector(dx: 0.98, dy: 0.7))
+            let end = surface.coordinate(withNormalizedOffset: CGVector(dx: 0.98, dy: 0.3))
+            start.press(forDuration: 0.1, thenDragTo: end)
             attempts += 1
         }
     }
@@ -161,7 +168,9 @@ final class HabituateUITests: XCTestCase {
         addHabit("Stretch", in: app)
         app.buttons["cell.Stretch.\(todayIndex)"].tap()
         openEditor(for: "Stretch", in: app)
-        app.buttons["Specific days"].tap()
+        let specificDays = app.buttons["Specific days"]
+        scrollTo(specificDays, in: app)
+        specificDays.tap()
         // Turn off a day other than today; today's tick must survive.
         let otherDay = (todayIndex + 1) % 7
         app.buttons["weekday.\(otherDay)"].tap()

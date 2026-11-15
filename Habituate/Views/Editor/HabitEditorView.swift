@@ -10,7 +10,10 @@ struct HabitEditorView: View {
     @State private var model: HabitEditorViewModel
     @State private var confirmingDelete: DeletionRequest?
     @FocusState private var nameFocused: Bool
-    @ScaledMetric(relativeTo: .title2) private var swatchSize: CGFloat = 44
+    @ScaledMetric(relativeTo: .title2) private var scaledSwatch: CGFloat = 44
+
+    /// Emoji and colour swatches are pictures; past a point, bigger only means fewer per row.
+    private var swatchSize: CGFloat { min(scaledSwatch, 52) }
 
     init(mode: HabitEditorMode, onDeleteRequested: @escaping (DeletionRequest) -> Void) {
         self.onDeleteRequested = onDeleteRequested
@@ -77,6 +80,7 @@ struct HabitEditorView: View {
                 }
             }
             .padding(.vertical, 4)
+            .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
             TextField(
                 "Custom icon",
                 text: Binding(
@@ -144,6 +148,7 @@ struct HabitEditorView: View {
                 }
             }
             .padding(.vertical, 4)
+            .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
         } header: {
             Text("Colour")
         }

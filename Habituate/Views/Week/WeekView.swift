@@ -175,7 +175,7 @@ struct GridLayout {
     init(width: CGFloat, stacked: Bool) {
         isStacked = stacked
         let usable = max(width - 32, 0)
-        nameWidth = stacked ? 0 : min(max(usable * 0.32, 92), 200)
+        nameWidth = stacked ? 0 : min(max(usable * 0.35, 100), 200)
         let column = (usable - nameWidth) / 7
         cellDiameter = max(min(column - 6, stacked ? 40 : 34), 18)
     }

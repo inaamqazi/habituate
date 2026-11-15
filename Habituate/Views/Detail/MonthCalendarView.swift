@@ -46,7 +46,7 @@ struct MonthCalendarView: View {
                 .accessibilityIdentifier("nextMonth")
             }
 
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 7), spacing: 6) {
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: 7), spacing: 2) {
                 ForEach(cells, id: \.self) { cell in
                     switch cell {
                     case .header(let index):
@@ -106,16 +106,19 @@ private struct CalendarDayView: View {
     let isToday: Bool
     let action: () -> Void
 
+    @ScaledMetric(relativeTo: .callout) private var diameter: CGFloat = 34
+
     var body: some View {
+        let size = min(diameter, 42)
         Button(action: action) {
             Text("\(day.dayOfMonth)")
                 .font(.callout.weight(isToday ? .bold : .regular))
                 .lineLimit(1)
                 .minimumScaleFactor(0.5)
                 .foregroundStyle(foreground)
-                .frame(maxWidth: .infinity)
-                .aspectRatio(1, contentMode: .fit)
+                .frame(width: size, height: size)
                 .background { background }
+                .frame(maxWidth: .infinity, minHeight: 44)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

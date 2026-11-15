@@ -29,12 +29,14 @@ struct DayHeaderRow: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.5)
                 .frame(maxWidth: .infinity)
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel(isToday ? "\(day.accessibilityName), today" : day.accessibilityName)
             }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
+        // One element for the whole row: every grid cell already reads out its full date.
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Week of \(days.first?.accessibilityName ?? "")")
+        .accessibilityAddTraits(.isHeader)
         .background(Color(.systemBackground))
         .overlay(alignment: .bottom) { Divider() }
     }
@@ -76,9 +78,12 @@ struct WeekSummaryCard: View {
                             isTodayComplete ? "Unmark Today" : "Complete Today",
                             systemImage: isTodayComplete ? "arrow.uturn.backward" : "checkmark.circle.fill"
                         )
+                        .lineLimit(isLarge ? nil : 1)
+                        .minimumScaleFactor(isLarge ? 1 : 0.8)
+                        .frame(maxWidth: isLarge ? .infinity : nil)
                     }
                     .buttonStyle(.borderedProminent)
-                    .buttonBorderShape(.capsule)
+                    .buttonBorderShape(isLarge ? .roundedRectangle : .capsule)
                     .disabled(!canCompleteToday)
                     .accessibilityIdentifier("completeToday")
                 }
@@ -123,7 +128,8 @@ struct WeekNavigationBar: View {
             HStack(spacing: 10) {
                 Text(rangeText)
                     .font(.subheadline.weight(.semibold))
-                    .multilineTextAlignment(.center)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
                     .accessibilityIdentifier("weekRange")
                 Button("Today", action: onToday)
                     .font(.subheadline.weight(.semibold))
@@ -150,7 +156,10 @@ struct WeekNavigationBar: View {
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 2)
-        .background(.bar)
+        // Like the system tab bar, the bar stops growing at the largest sizes so the grid keeps its room;
+        // opaque so content scrolling behind it can't hurt the text contrast.
+        .dynamicTypeSize(...DynamicTypeSize.accessibility1)
+        .background(Color(.systemBackground))
         .overlay(alignment: .top) { Divider() }
     }
 }

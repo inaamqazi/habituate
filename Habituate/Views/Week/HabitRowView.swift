@@ -54,8 +54,8 @@ struct HabitRowView: View {
 
     private func nameLink(streak: Int, weekRate: CompletionRate, weekComplete: Bool, canMarkWeek: Bool) -> some View {
         NavigationLink(value: habit.id) {
-            HStack(spacing: 8) {
-                HabitIcon(emoji: habit.emoji, name: habit.name, color: habit.habitColor, size: 28)
+            HStack(spacing: 6) {
+                HabitIcon(emoji: habit.emoji, name: habit.name, color: habit.habitColor, size: 24)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(habit.name)
                         .font(.subheadline.weight(.medium))
@@ -150,7 +150,7 @@ struct DayCell: View {
                 case .upcoming:
                     Circle().strokeBorder(Color.secondary.opacity(0.4), style: StrokeStyle(lineWidth: 1.5, dash: [3, 3]))
                 case .unscheduled:
-                    Circle().fill(Color(.tertiarySystemFill))
+                    Circle().fill(Color(.systemGray5))
                 }
             }
             .frame(width: diameter, height: diameter)
