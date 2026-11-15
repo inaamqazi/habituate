@@ -1,0 +1,76 @@
+name: Build and test
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: macos-15
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Tools
+        run: |
+          xcodebuild -version
+          brew install xcodegen
+          xcodegen generate
+
+      - name: Pick a small and a large iPhone simulator
+        run: |
+          pick() {
+            xcrun simctl list devices available -j | jq -r --arg p "$1" \
+              '[.devices | to_entries[] | select(.key | test("iOS")) | .value[] | select(.name | test($p))] | last | .udid // empty'
+          }
+          SMALL=$(pick "iPhone SE")
+          LARGE=$(pick "Pro Max")
+          echo "Small: $SMALL  Large: $LARGE"
+          test -n "$SMALL" && test -n "$LARGE"
+          echo "SMALL=$SMALL" >> "$GITHUB_ENV"
+          echo "LARGE=$LARGE" >> "$GITHUB_ENV"
+
+      - name: Build (Swift warnings are errors)
+        run: |
+          set -o pipefail
+          xcodebuild build-for-testing \
+            -project Habituate.xcodeproj -scheme Habituate \
+            -destination "id=$SMALL" \
+            -derivedDataPath DerivedData \
+            SWIFT_TREAT_WARNINGS_AS_ERRORS=YES \
+            2>&1 | tee build.log | grep -E "error:|warning:|BUILD" || true
+          grep -q "TEST BUILD SUCCEEDED" build.log
+          grep -E "warning:" build.log | sort -u > warnings.txt || true
+          echo "Warnings: $(wc -l < warnings.txt)"
+          cat warnings.txt
+
+      - name: Unit and UI tests on iPhone SE and Pro Max
+        run: |
+          set -o pipefail
+          xcodebuild test-without-building \
+            -project Habituate.xcodeproj -scheme Habituate \
+            -destination "id=$SMALL" -destination "id=$LARGE" \
+            -derivedDataPath DerivedData \
+            -resultBundlePath TestResults.xcresult \
+            2>&1 | tee test.log | grep -E "Test Case|error:|TEST|Executed" || true
+          grep -q "TEST EXECUTE SUCCEEDED" test.log
+
+      - name: Export screenshots and summary
+        if: always()
+        run: |
+          mkdir -p screenshots
+          xcrun xcresulttool export attachments --path TestResults.xcresult --output-path screenshots || true
+          xcrun xcresulttool get test-results summary --path TestResults.xcresult > summary.json || true
+          xcrun xcresulttool get test-results tests --path TestResults.xcresult > tests.json || true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: results
+          path: |
+            build.log
+            test.log
+            warnings.txt
+            summary.json
+            tests.json
+            screenshots
