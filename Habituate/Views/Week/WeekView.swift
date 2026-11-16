@@ -40,27 +40,33 @@ struct WeekView: View {
 
     // Built by hand rather than with ContentUnavailableView, which caps the text size.
     private var emptyState: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                Image(systemName: "checklist")
-                    .font(.system(size: 56))
-                    .foregroundStyle(.secondary)
-                    .accessibilityHidden(true)
-                Text("No Habits Yet")
-                    .font(.title2.bold())
-                    .accessibilityAddTraits(.isHeader)
-                Text("Add the habits you want to build, then tick them off each day.")
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                Button("Add Your First Habit") { editorMode = .new }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
-                    .accessibilityIdentifier("addFirstHabit")
+        GeometryReader { proxy in
+            ScrollView {
+                emptyStateContent
+                    // At least screen height so it's centred; taller at large text sizes, and then it scrolls.
+                    .frame(maxWidth: .infinity, minHeight: proxy.size.height)
             }
-            .padding(32)
-            .frame(maxWidth: .infinity)
-            .containerRelativeFrame(.vertical, alignment: .center)
         }
+    }
+
+    private var emptyStateContent: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "checklist")
+                .font(.system(size: 56))
+                .foregroundStyle(.secondary)
+                .accessibilityHidden(true)
+            Text("No Habits Yet")
+                .font(.title2.bold())
+                .accessibilityAddTraits(.isHeader)
+            Text("Add the habits you want to build, then tick them off each day.")
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+            Button("Add Your First Habit") { editorMode = .new }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                .accessibilityIdentifier("addFirstHabit")
+        }
+        .padding(32)
     }
 
     @ToolbarContentBuilder

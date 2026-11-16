@@ -53,8 +53,6 @@ struct MonthCalendarView: View {
                         Text(WeekdayNames.veryShort(index))
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.5)
                             .accessibilityHidden(true)
                     case .blank:
                         Color.clear
