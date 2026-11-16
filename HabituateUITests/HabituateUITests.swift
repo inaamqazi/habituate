@@ -43,15 +43,13 @@ final class HabituateUITests: XCTestCase {
         return XCTWaiter().wait(for: [expectation], timeout: timeout) == .completed
     }
 
-    /// Swipes the list up until the element is entirely on screen. `isHittable` alone isn't enough:
-    /// it is true for a button cut off by the bottom edge, and tapping its centre then misses.
+    /// Swipes up in the middle of the screen until the element is entirely on screen. `isHittable` alone
+    /// isn't enough: it is true for a button cut off by the bottom edge, and tapping its centre then misses.
     /// (Dragging in the right-hand margin grabs the scroll indicator instead of scrolling the list.)
     private func scrollTo(_ element: XCUIElement, in app: XCUIApplication) {
-        let list = app.collectionViews.firstMatch
-        let surface = list.exists ? list : app
         var attempts = 0
         while !isFullyVisible(element, in: app) && attempts < 10 {
-            surface.swipeUp(velocity: .slow)
+            app.swipeUp(velocity: .slow)
             attempts += 1
         }
     }
