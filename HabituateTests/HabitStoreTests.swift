@@ -126,6 +126,40 @@ final class HabitStoreTests: XCTestCase {
         XCTAssertFalse(history.isScheduled(today.adding(1)), "Thursday is after the edit")
     }
 
+    func testTickOnDayDroppedFromScheduleCanBeRemovedButNotAddedAgain() throws {
+        let store = try makeStore()
+        let habit = store.addHabit(draft("Run"), today: monday)
+        store.toggle(habit, on: today, today: today)
+        store.updateHabit(habit, with: draft("Run", weekdays: .weekend), today: today)
+        XCTAssertFalse(habit.history.isScheduled(today))
+        XCTAssertEqual(DayState(day: today, history: habit.history, today: today), .done, "Today's tick survives the edit")
+
+        store.toggle(habit, on: today, today: today)
+        XCTAssertFalse(habit.isDone(on: today))
+        store.toggle(habit, on: today, today: today)
+        XCTAssertFalse(habit.isDone(on: today), "An unscheduled day can't be ticked again")
+    }
+
+    func testRemovingSamplesAlsoDropsUndoForADeletedSample() throws {
+        let store = try makeStore()
+        store.addSampleHabits(today: today)
+        store.delete(try XCTUnwrap(store.habits().first))
+        XCTAssertNotNil(store.recentlyDeleted)
+
+        store.removeSampleHabits()
+        XCTAssertNil(store.recentlyDeleted)
+        store.undoDelete()
+        XCTAssertTrue(store.habits().isEmpty, "Undo must not bring a sample back after samples were removed")
+    }
+
+    func testDeniedNotificationPermissionTurnsReminderBackOff() async {
+        let model = HabitEditorViewModel(habit: nil)
+        // An inactive scheduler never gets permission, like a user who said no.
+        await model.setReminder(true, using: ReminderScheduler(isActive: false))
+        XCTAssertFalse(model.draft.reminderEnabled)
+        XCTAssertTrue(model.notificationsDenied)
+    }
+
     func testReorder() throws {
         let store = try makeStore()
         ["A", "B", "C"].forEach { store.addHabit(draft($0), today: today) }

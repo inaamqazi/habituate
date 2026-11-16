@@ -78,9 +78,14 @@ struct StatTile: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Label(title, systemImage: systemImage)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(tint)
+            // The tint goes on the icon only; tinted caption text (orange, yellow) fails contrast.
+            Label {
+                Text(title)
+            } icon: {
+                Image(systemName: systemImage)
+                    .foregroundStyle(tint)
+            }
+            .font(.caption.weight(.semibold))
             Text(value)
                 .font(.title2.bold())
                 .contentTransition(.numericText())

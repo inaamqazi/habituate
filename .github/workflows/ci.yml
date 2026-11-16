@@ -8,6 +8,9 @@ jobs:
   test:
     runs-on: macos-15
     timeout-minutes: 75
+    env:
+      # Pinned so a runner image update can't silently switch the toolchain.
+      DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
     steps:
       - uses: actions/checkout@v4
 
@@ -19,9 +22,13 @@ jobs:
 
       - name: Pick a small and a large iPhone simulator
         run: |
+          # Use the iOS version that matches Xcode's SDK. Taking the newest installed runtime meant
+          # the tests moved to a different iOS (e.g. 26.x) whenever the runner image added one.
+          RUNTIME="iOS-$(xcrun --sdk iphonesimulator --show-sdk-version | tr . -)"
+          echo "Simulator runtime: $RUNTIME"
           pick() {
-            xcrun simctl list devices available -j | jq -r --arg p "$1" \
-              '[.devices | to_entries[] | select(.key | test("iOS")) | .value[] | select(.name | test($p))] | last | .udid // empty'
+            xcrun simctl list devices available -j | jq -r --arg p "$1" --arg rt "$RUNTIME" \
+              '[.devices | to_entries[] | select(.key | endswith($rt)) | .value[] | select(.name | test($p))] | last | .udid // empty'
           }
           SMALL=$(pick "iPhone SE")
           LARGE=$(pick "Pro Max")
@@ -52,7 +59,7 @@ jobs:
             -destination "id=$SMALL" -destination "id=$LARGE" \
             -derivedDataPath DerivedData \
             -resultBundlePath TestResults.xcresult \
-            2>&1 | tee test.log | grep -E "Test Case|error:|TEST|Executed" || true
+            2>&1 | tee test.log | grep -E "Test [Cc]ase|error:|TEST|Executed" || true
           grep -q "TEST EXECUTE SUCCEEDED" test.log
 
       - name: Export screenshots and summary
@@ -61,6 +68,7 @@ jobs:
           mkdir -p screenshots
           xcrun xcresulttool export attachments --path TestResults.xcresult --output-path screenshots || true
           xcrun xcresulttool get test-results summary --path TestResults.xcresult > summary.json || true
+          jq -r '.testFailures[]? | "FAILED \(.testIdentifierString): \(.failureText)"' summary.json || true
           xcrun xcresulttool get test-results tests --path TestResults.xcresult > tests.json || true
           mkdir -p crashes
           find ~/Library/Logs/DiagnosticReports -name "Habituate*" -exec cp {} crashes/ \; 2>/dev/null || true

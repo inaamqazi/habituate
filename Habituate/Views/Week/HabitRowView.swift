@@ -84,8 +84,12 @@ struct HabitRowView: View {
     private func statsLine(streak: Int, weekRate: CompletionRate) -> some View {
         HStack(spacing: 6) {
             if streak > 0 {
-                Text("\(Image(systemName: "flame.fill")) \(streak)")
-                    .foregroundStyle(.orange)
+                // Only the flame is orange: orange text on white is too faint to read.
+                HStack(spacing: 2) {
+                    Image(systemName: "flame.fill")
+                        .foregroundStyle(.orange)
+                    Text("\(streak)")
+                }
             }
             if weekRate.fraction != nil {
                 Text(weekRate.percentText)

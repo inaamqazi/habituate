@@ -43,20 +43,19 @@ final class HabituateUITests: XCTestCase {
         return XCTWaiter().wait(for: [expectation], timeout: timeout) == .completed
     }
 
-    /// Drags in the form's right-hand margin, where no button can swallow the gesture.
+    /// Swipes up in the middle of the screen until the element is entirely on screen. `isHittable` alone
+    /// isn't enough: it is true for a button cut off by the bottom edge, and tapping its centre then misses.
+    /// (Dragging in the right-hand margin grabs the scroll indicator instead of scrolling the list.)
     private func scrollTo(_ element: XCUIElement, in app: XCUIApplication) {
-        if app.keyboards.count > 0 {
-            app.typeText("\n")
-        }
-        let list = app.collectionViews.firstMatch
-        let surface = list.exists ? list : app
         var attempts = 0
-        while !(element.exists && element.isHittable) && attempts < 10 {
-            let start = surface.coordinate(withNormalizedOffset: CGVector(dx: 0.98, dy: 0.7))
-            let end = surface.coordinate(withNormalizedOffset: CGVector(dx: 0.98, dy: 0.3))
-            start.press(forDuration: 0.1, thenDragTo: end)
+        while !isFullyVisible(element, in: app) && attempts < 10 {
+            app.swipeUp(velocity: .slow)
             attempts += 1
         }
+    }
+
+    private func isFullyVisible(_ element: XCUIElement, in app: XCUIApplication) -> Bool {
+        element.exists && element.isHittable && app.windows.firstMatch.frame.contains(element.frame)
     }
 
     private func openEditor(for name: String, in app: XCUIApplication) {
@@ -224,10 +223,18 @@ final class HabituateUITests: XCTestCase {
         // Test launches never get notification permission, which behaves like the user saying no.
         let app = launch()
         app.buttons["addFirstHabit"].tap()
+        // The name field is focused on open; close the keyboard so it doesn't cover the toggle.
+        let field = app.textFields["habitNameField"]
+        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        field.tap()
+        field.typeText("\n")
+        XCTAssertTrue(waitToDisappear(app.keyboards.firstMatch, timeout: 5))
         let toggle = app.switches["reminderToggle"]
         scrollTo(toggle, in: app)
         toggle.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
+        // The note is added below the toggle, possibly off screen.
         let note = app.descendants(matching: .any)["notificationsDeniedNote"]
+        scrollTo(note, in: app)
         XCTAssertTrue(note.waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["Open Settings"].exists)
     }

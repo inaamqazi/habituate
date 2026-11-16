@@ -15,19 +15,20 @@ struct DayHeaderRow: View {
             ForEach(days, id: \.self) { day in
                 let isToday = day == today
                 VStack(spacing: 2) {
+                    // A single letter fits its column at every text size, so it isn't shrunk.
                     Text(WeekdayNames.veryShort(day.weekdayIndex))
                         .font(.caption2.weight(.semibold))
                         .foregroundStyle(.secondary)
                     Text("\(day.dayOfMonth)")
                         .font(.footnote.weight(isToday ? .bold : .regular))
                         .foregroundStyle(isToday ? Color.white : Color.primary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
                         .frame(minWidth: 26, minHeight: 26)
                         .background {
                             if isToday { Circle().fill(Color.accentColor) }
                         }
                 }
-                .lineLimit(1)
-                .minimumScaleFactor(0.5)
                 .frame(maxWidth: .infinity)
             }
         }
@@ -78,8 +79,6 @@ struct WeekSummaryCard: View {
                             isTodayComplete ? "Unmark Today" : "Complete Today",
                             systemImage: isTodayComplete ? "arrow.uturn.backward" : "checkmark.circle.fill"
                         )
-                        .lineLimit(isLarge ? nil : 1)
-                        .minimumScaleFactor(isLarge ? 1 : 0.8)
                         .frame(maxWidth: isLarge ? .infinity : nil)
                     }
                     .buttonStyle(.borderedProminent)
